@@ -1,10 +1,10 @@
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import { ITEM_GAP, ITEM_HEIGHT, ITEM_WIDTH } from '../app/layout-constants'
 import { CarouselRow } from './carousel-row'
+import { AiAssistantBar } from './ai-assistant-bar'
 import { GenreNavBar } from './genre-nav-bar'
 import { CatalogLoadingPanel } from './loading-splash'
 import { HeroPanel } from './hero-panel'
-import { SearchBar } from './search-bar'
 import { getFocusedItem } from '../features/catalog/catalog-rows'
 import { isSearchActive } from '../features/catalog/browse-rows'
 import type { BrowseFocus, BrowseMode, CatalogItem, CatalogRow } from '../features/catalog/types'
@@ -17,6 +17,7 @@ interface BrowseScreenProps {
   searchQuery: string
   onSearchQueryChange: (query: string) => void
   onActivateSearch?: () => void
+  onConfirmSearch?: () => void
   onSelectItem?: (item: CatalogItem) => void
   isContentLoading?: boolean
   loadedRowCount?: number
@@ -80,6 +81,7 @@ export function BrowseScreen({
   searchQuery,
   onSearchQueryChange,
   onActivateSearch,
+  onConfirmSearch,
   onSelectItem,
   isContentLoading = false,
   loadedRowCount,
@@ -148,11 +150,18 @@ export function BrowseScreen({
 
   return (
     <div className="flex h-full flex-col">
-      <SearchBar
-        focus={focus}
-        query={searchQuery}
-        onQueryChange={onSearchQueryChange}
+      <AiAssistantBar
+        value={searchQuery}
+        onChange={onSearchQueryChange}
+        onSubmit={onConfirmSearch}
+        isFocused={focus.zone === 'search'}
         onActivate={onActivateSearch}
+        hint={
+          focus.zone === 'search'
+            ? 'Escribe para buscar · Enter baja a resultados · ↑↓ para navegar'
+            : 'Sube con ↑ desde géneros para buscar'
+        }
+        placeholder="Pregúntale a Velope... Ej: acción, horror, spiderman, sci-fi..."
       />
       {!isFavoritesMode ? <GenreNavBar focus={focus} /> : null}
       {!isFavoritesMode ? <HeroPanel item={heroItem} /> : null}

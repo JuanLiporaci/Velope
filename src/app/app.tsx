@@ -360,6 +360,15 @@ export function App() {
     setFocus((current) => ({ ...current, zone: 'search' }))
   }, [setFocus])
 
+  const handleConfirmSearch = useCallback(() => {
+    setFocus((current) => ({
+      ...current,
+      zone: 'content',
+      rowIndex: 0,
+      itemIndex: 0,
+    }))
+  }, [setFocus])
+
   const handleAssistantQuery = useCallback(
     (query: string) => {
       setBrowseMode('catalog')
@@ -408,6 +417,7 @@ export function App() {
           searchQuery={searchQuery}
           onSearchQueryChange={setSearchQuery}
           onActivateSearch={handleActivateSearch}
+          onConfirmSearch={handleConfirmSearch}
           onSelectItem={handleSelectBrowseItem}
           isContentLoading={isInitialLoading || isGenreLoading}
           loadedRowCount={ROW_COUNT}

@@ -9,7 +9,7 @@ interface HomeInsightsScreenProps {
 export function HomeInsightsScreen({ onAssistantQuery }: HomeInsightsScreenProps) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <AiAssistantBar onSubmitQuery={onAssistantQuery} compact />
+      <AiAssistantBar onSubmitQuery={onAssistantQuery} compact clearOnSubmit />
       <YearStatisticsDashboard stats={HARDCODED_TV_YEAR_STATISTICS} />
     </div>
   )
