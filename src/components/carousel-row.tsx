@@ -16,6 +16,7 @@ interface CarouselRowProps {
   itemHeight: number
   itemGap: number
   rowIndex: number
+  onSelectItem?: (item: CatalogItem) => void
 }
 
 export function CarouselRow({
@@ -27,6 +28,7 @@ export function CarouselRow({
   itemHeight,
   itemGap,
   rowIndex,
+  onSelectItem,
 }: CarouselRowProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const [visibleWidth, setVisibleWidth] = useState(0)
@@ -111,6 +113,7 @@ export function CarouselRow({
               isFocused={isActiveRow && index === focusedIndex}
               width={itemWidth}
               height={itemHeight}
+              onSelect={onSelectItem}
             />
           ))}
         </div>

@@ -1,7 +1,19 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
-import type { BrowseFocus, CatalogRow, NavigationDirection } from '../catalog/types'
+import type {
+  BrowseFocus,
+  CatalogRow,
+  DetailsActionId,
+  DetailsFocus,
+  NavigationDirection,
+} from '../catalog/types'
+import { DETAILS_ACTIONS, INITIAL_DETAILS_FOCUS } from '../catalog/types'
 import { GENRE_NAV_ITEMS } from '../catalog/genres'
-import { getNextBrowseFocus, INITIAL_BROWSE_FOCUS, normalizeBrowseFocus } from './app-navigation-utils'
+import {
+  getNextBrowseFocus,
+  getNextDetailsFocus,
+  INITIAL_BROWSE_FOCUS,
+  realignBrowseFocusForRows,
+} from './app-navigation-utils'
 
 const INITIAL_REPEAT_DELAY_MS = 280
 const FAST_REPEAT_INTERVAL_MS = 55
@@ -10,9 +22,17 @@ interface UseAppNavigationOptions {
   rows: CatalogRow[]
   enabled?: boolean
   onGenreChange?: (genreIndex: number) => void
+  onRailSelect?: (railIndex: number) => void
   onOpenDetails?: (focus: BrowseFocus) => void
   onCloseDetails?: () => void
+  onDetailsAction?: (action: DetailsActionId) => void
+  onSelectRecommendation?: (index: number) => void
+  onSearchInput?: (value: string) => void
+  onSearchBackspace?: () => void
   isDetailsOpen?: boolean
+  detailsFocus?: DetailsFocus
+  setDetailsFocus?: Dispatch<SetStateAction<DetailsFocus>>
+  recommendationCount?: number
 }
 
 interface UseAppNavigationResult {
@@ -36,34 +56,58 @@ function directionFromKey(key: string): NavigationDirection | null {
 }
 
 function isBackKey(key: string): boolean {
-  return key === 'Escape' || key === 'Backspace' || key === 'BrowserBack'
+  return key === 'Escape' || key === 'BrowserBack'
 }
 
 function isEnterKey(key: string): boolean {
   return key === 'Enter'
 }
 
+function isPrintableKey(key: string): boolean {
+  return key.length === 1 && !key.startsWith('Arrow') && key !== 'Enter'
+}
+
 export function useAppNavigation({
   rows,
   enabled = true,
   onGenreChange,
+  onRailSelect,
   onOpenDetails,
   onCloseDetails,
+  onDetailsAction,
+  onSelectRecommendation,
+  onSearchInput,
+  onSearchBackspace,
   isDetailsOpen = false,
+  detailsFocus = INITIAL_DETAILS_FOCUS,
+  setDetailsFocus,
+  recommendationCount = 0,
 }: UseAppNavigationOptions): UseAppNavigationResult {
   const [focus, setFocus] = useState<BrowseFocus>(INITIAL_BROWSE_FOCUS)
   const focusRef = useRef(focus)
   const rowsRef = useRef(rows)
+  const rowsSignatureRef = useRef<string | null>(null)
+  const detailsFocusRef = useRef(detailsFocus)
   const repeatTimerRef = useRef<number | null>(null)
   const activeDirectionRef = useRef<NavigationDirection | null>(null)
   const lastGenreIndexRef = useRef(focus.genreIndex)
 
   focusRef.current = focus
   rowsRef.current = rows
+  detailsFocusRef.current = detailsFocus
 
   const move = useCallback((direction: NavigationDirection) => {
     setFocus((current) => getNextBrowseFocus(current, direction, rowsRef.current))
   }, [])
+
+  const moveDetails = useCallback(
+    (direction: NavigationDirection) => {
+      setDetailsFocus?.((current) =>
+        getNextDetailsFocus(current, direction, recommendationCount),
+      )
+    },
+    [recommendationCount, setDetailsFocus],
+  )
 
   const clearRepeatTimer = useCallback(() => {
     if (repeatTimerRef.current !== null) {
@@ -73,7 +117,7 @@ export function useAppNavigation({
   }, [])
 
   const scheduleRepeat = useCallback(
-    (direction: NavigationDirection) => {
+    (direction: NavigationDirection, mode: 'browse' | 'details') => {
       clearRepeatTimer()
       activeDirectionRef.current = direction
 
@@ -83,11 +127,15 @@ export function useAppNavigation({
         }
 
         repeatTimerRef.current = window.setInterval(() => {
-          move(direction)
+          if (mode === 'details') {
+            moveDetails(direction)
+          } else {
+            move(direction)
+          }
         }, FAST_REPEAT_INTERVAL_MS)
       }, INITIAL_REPEAT_DELAY_MS)
     },
-    [clearRepeatTimer, move],
+    [clearRepeatTimer, move, moveDetails],
   )
 
   useEffect(() => {
@@ -100,12 +148,71 @@ export function useAppNavigation({
         if (isBackKey(event.key)) {
           event.preventDefault()
           onCloseDetails?.()
+          return
         }
+
+        const direction = directionFromKey(event.key)
+        if (direction) {
+          event.preventDefault()
+          if (event.repeat) {
+            return
+          }
+
+          moveDetails(direction)
+          scheduleRepeat(direction, 'details')
+          return
+        }
+
+        if (isEnterKey(event.key)) {
+          event.preventDefault()
+          const currentDetailsFocus = detailsFocusRef.current
+
+          if (currentDetailsFocus.zone === 'back') {
+            onCloseDetails?.()
+            return
+          }
+
+          if (currentDetailsFocus.zone === 'recommendations') {
+            onSelectRecommendation?.(currentDetailsFocus.recommendationIndex)
+            return
+          }
+
+          const action = DETAILS_ACTIONS[currentDetailsFocus.actionIndex]
+          onDetailsAction?.(action)
+        }
+
+        return
+      }
+
+      if (focusRef.current.zone === 'search' && isPrintableKey(event.key)) {
+        event.preventDefault()
+        onSearchInput?.(event.key)
+        return
+      }
+
+      if (focusRef.current.zone === 'search' && event.key === 'Backspace') {
+        event.preventDefault()
+        onSearchBackspace?.()
         return
       }
 
       if (isEnterKey(event.key)) {
         event.preventDefault()
+
+        if (focusRef.current.zone === 'rail') {
+          onRailSelect?.(focusRef.current.railIndex)
+          return
+        }
+
+        if (focusRef.current.zone === 'search') {
+          setFocus((current) => ({
+            ...current,
+            zone: 'content',
+            rowIndex: 0,
+            itemIndex: 0,
+          }))
+          return
+        }
 
         if (focusRef.current.zone === 'nav') {
           if (focusRef.current.genreIndex !== lastGenreIndexRef.current) {
@@ -134,7 +241,7 @@ export function useAppNavigation({
 
       const previousGenreIndex = focusRef.current.genreIndex
       move(direction)
-      scheduleRepeat(direction)
+      scheduleRepeat(direction, 'browse')
 
       window.setTimeout(() => {
         const nextGenreIndex = focusRef.current.genreIndex
@@ -169,7 +276,22 @@ export function useAppNavigation({
       window.removeEventListener('keyup', handleKeyUp)
       clearRepeatTimer()
     }
-  }, [clearRepeatTimer, enabled, isDetailsOpen, move, onCloseDetails, onGenreChange, onOpenDetails, scheduleRepeat])
+  }, [
+    clearRepeatTimer,
+    enabled,
+    isDetailsOpen,
+    move,
+    moveDetails,
+    onCloseDetails,
+    onDetailsAction,
+    onGenreChange,
+    onOpenDetails,
+    onRailSelect,
+    onSearchBackspace,
+    onSearchInput,
+    onSelectRecommendation,
+    scheduleRepeat,
+  ])
 
   useEffect(() => {
     if (rows.length === 0) {
@@ -180,7 +302,9 @@ export function useAppNavigation({
       return
     }
 
-    setFocus((current) => normalizeBrowseFocus(current, rows))
+    const realigned = realignBrowseFocusForRows(focusRef.current, rows, rowsSignatureRef.current)
+    rowsSignatureRef.current = realigned.signature
+    setFocus(realigned.focus)
   }, [rows])
 
   useEffect(() => {

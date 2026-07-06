@@ -4,13 +4,20 @@ import { CarouselRow } from './carousel-row'
 import { GenreNavBar } from './genre-nav-bar'
 import { CatalogLoadingPanel } from './loading-splash'
 import { HeroPanel } from './hero-panel'
+import { SearchBar } from './search-bar'
 import { getFocusedItem } from '../features/catalog/catalog-rows'
-import type { BrowseFocus, CatalogRow } from '../features/catalog/types'
+import { isSearchActive } from '../features/catalog/browse-rows'
+import type { BrowseFocus, BrowseMode, CatalogItem, CatalogRow } from '../features/catalog/types'
 import { getVerticalScrollOffset } from '../features/navigation/navigation-utils'
 
 interface BrowseScreenProps {
   rows: CatalogRow[]
   focus: BrowseFocus
+  browseMode?: BrowseMode
+  searchQuery: string
+  onSearchQueryChange: (query: string) => void
+  onActivateSearch?: () => void
+  onSelectItem?: (item: CatalogItem) => void
   isContentLoading?: boolean
   loadedRowCount?: number
   showInitialSplash?: boolean
@@ -69,6 +76,11 @@ function computeContentScrollOffset(
 export function BrowseScreen({
   rows,
   focus,
+  browseMode = 'catalog',
+  searchQuery,
+  onSearchQueryChange,
+  onActivateSearch,
+  onSelectItem,
   isContentLoading = false,
   loadedRowCount,
   showInitialSplash = false,
@@ -79,7 +91,20 @@ export function BrowseScreen({
     () => (focus.zone === 'content' ? getFocusedItem(rows, focus) : null),
     [focus, rows],
   )
-  const heroItem = focusedItem ?? getFocusedItem(rows, { rowIndex: 0, itemIndex: 0 })
+  const isSearchMode = isSearchActive(searchQuery) && browseMode === 'catalog'
+  const heroItem = useMemo(() => {
+    if (focus.zone === 'content') {
+      return focusedItem ?? rows[0]?.items[0] ?? null
+    }
+
+    if (isSearchMode) {
+      return rows[0]?.items[0] ?? null
+    }
+
+    return focusedItem ?? rows[0]?.items[0] ?? null
+  }, [focus.zone, focusedItem, isSearchMode, rows])
+  const isFavoritesMode = browseMode === 'favorites'
+  const hasEmptyFavorites = isFavoritesMode && rows.some((row) => row.id === 'favorites-empty')
 
   useLayoutEffect(() => {
     const container = rowsContainerRef.current
@@ -118,11 +143,19 @@ export function BrowseScreen({
 
   const visibleRows = rows.length
   const totalRows = loadedRowCount ?? rows.length
+  const hasEmptySearchRow = rows.some((row) => row.items.length === 0)
+  const activeRowItemCount = rows[focus.rowIndex]?.items.length ?? 0
 
   return (
     <div className="flex h-full flex-col">
-      <GenreNavBar focus={focus} />
-      <HeroPanel item={heroItem} />
+      <SearchBar
+        focus={focus}
+        query={searchQuery}
+        onQueryChange={onSearchQueryChange}
+        onActivate={onActivateSearch}
+      />
+      {!isFavoritesMode ? <GenreNavBar focus={focus} /> : null}
+      {!isFavoritesMode ? <HeroPanel item={heroItem} /> : null}
 
       <div ref={carouselViewportRef} className="relative min-h-0 flex-1 overflow-hidden">
         {showInitialSplash ? (
@@ -143,6 +176,26 @@ export function BrowseScreen({
               </div>
             ))}
           </div>
+        ) : hasEmptyFavorites ? (
+          <div className="flex h-full items-center justify-center px-12">
+            <div className="max-w-xl rounded-[1.75rem] border border-[var(--color-border-subtle)] bg-[rgba(255,255,255,0.02)] px-8 py-10 text-center">
+              <p className="text-lg font-medium text-[var(--color-text-primary)]">Aún no tienes guardados</p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                Abre cualquier título y pulsa Guardar para añadirlo a tu lista personal.
+              </p>
+            </div>
+          </div>
+        ) : hasEmptySearchRow ? (
+          <div className="flex h-full items-center justify-center px-12">
+            <div className="max-w-xl rounded-[1.75rem] border border-[var(--color-border-subtle)] bg-[rgba(255,255,255,0.02)] px-8 py-10 text-center">
+              <p className="text-lg font-medium text-[var(--color-text-primary)]">
+                No encontramos coincidencias
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--color-text-muted)]">
+                Prueba con otro término en español o inglés, por ejemplo acción, horror, spiderman o sci-fi.
+              </p>
+            </div>
+          </div>
         ) : (
           <div
             ref={rowsContainerRef}
@@ -160,6 +213,7 @@ export function BrowseScreen({
                 itemWidth={ITEM_WIDTH}
                 itemHeight={ITEM_HEIGHT}
                 itemGap={ITEM_GAP}
+                onSelectItem={onSelectItem}
               />
             ))}
 
@@ -183,9 +237,17 @@ export function BrowseScreen({
       </div>
 
       <footer className="border-t border-[var(--color-border-subtle)] px-12 py-3 text-xs text-[var(--color-text-muted)]">
-        {focus.zone === 'nav'
-          ? `Menú de géneros · ${focus.genreIndex + 1} de 5 · Enter para confirmar · ↓ para contenido`
-          : `Fila ${focus.rowIndex + 1} de ${visibleRows || totalRows} · Item ${focus.itemIndex + 1} · Enter para detalles · ↑ para menú`}
+        {focus.zone === 'rail'
+          ? `Menú lateral · ${focus.railIndex === 0 ? 'Inicio' : 'Guardados'} · Enter para abrir · → para continuar`
+          : focus.zone === 'search'
+            ? 'Búsqueda activa · Escribe para filtrar · Enter baja a resultados · ← vuelve al menú'
+            : focus.zone === 'nav'
+              ? `Menú de géneros · ${focus.genreIndex + 1} de 5 · Enter para confirmar · ↓ para contenido`
+              : isSearchMode
+                ? `Resultados · Item ${Math.min(focus.itemIndex + 1, activeRowItemCount || 1)} de ${activeRowItemCount} · Enter para detalles`
+                : isFavoritesMode
+                ? `Guardados · Fila ${focus.rowIndex + 1} · Item ${focus.itemIndex + 1} · Enter para detalles`
+                : `Fila ${focus.rowIndex + 1} de ${visibleRows || totalRows} · Item ${focus.itemIndex + 1} · Enter para detalles · ↑ para menú`}
       </footer>
     </div>
   )

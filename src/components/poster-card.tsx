@@ -7,9 +7,10 @@ interface PosterCardProps {
   isFocused: boolean
   width: number
   height: number
+  onSelect?: (item: CatalogItem) => void
 }
 
-export function PosterCard({ item, isFocused, width, height }: PosterCardProps) {
+export function PosterCard({ item, isFocused, width, height, onSelect }: PosterCardProps) {
   const [hasImageError, setHasImageError] = useState(false)
   const posterUrl = getPosterImageUrl(item.posterUrl)
   const shouldShowImage = Boolean(posterUrl) && !hasImageError
@@ -22,9 +23,18 @@ export function PosterCard({ item, isFocused, width, height }: PosterCardProps) 
     <article
       aria-label={`${item.title} ${item.year}`}
       aria-current={isFocused ? 'true' : undefined}
+      role={onSelect ? 'button' : undefined}
+      tabIndex={onSelect ? -1 : undefined}
+      onClick={() => onSelect?.(item)}
+      onKeyDown={(event) => {
+        if (onSelect && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          onSelect(item)
+        }
+      }}
       className={`poster-card relative shrink-0 overflow-hidden rounded-xl bg-[var(--color-surface-elevated)] ${
         isFocused ? 'poster-card--focused' : 'opacity-80'
-      }`}
+      } ${onSelect ? 'cursor-pointer' : ''}`}
       style={{ width, height, transformOrigin: 'center center' }}
     >
       {shouldShowImage ? (

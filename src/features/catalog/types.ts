@@ -25,10 +25,15 @@ export interface FocusPosition {
 
 export type NavigationDirection = 'up' | 'down' | 'left' | 'right'
 
-export type FocusZone = 'nav' | 'content'
+export type RailItemId = 'home' | 'favorites'
+
+export type BrowseMode = 'catalog' | 'favorites'
+
+export type FocusZone = 'rail' | 'search' | 'nav' | 'content'
 
 export interface BrowseFocus {
   zone: FocusZone
+  railIndex: number
   genreIndex: number
   rowIndex: number
   itemIndex: number
@@ -43,7 +48,28 @@ export interface BrowseSession {
 
 export type AppScreen = 'browse' | 'details'
 
-export type DetailsAction = 'play' | 'favorite'
+export type DetailsActionId = 'play' | 'favorite' | 'recommendations'
+
+export type DetailsFocusZone = 'back' | 'actions' | 'recommendations'
+
+export interface DetailsFocus {
+  zone: DetailsFocusZone
+  actionIndex: number
+  recommendationIndex: number
+}
+
+export const RAIL_ITEMS: Array<{ id: RailItemId; label: string }> = [
+  { id: 'home', label: 'Inicio' },
+  { id: 'favorites', label: 'Guardados' },
+]
+
+export const DETAILS_ACTIONS: DetailsActionId[] = ['play', 'favorite', 'recommendations']
+
+export const INITIAL_DETAILS_FOCUS: DetailsFocus = {
+  zone: 'back',
+  actionIndex: 0,
+  recommendationIndex: 0,
+}
 
 export interface RowDefinition {
   id: string
@@ -58,4 +84,15 @@ export interface RowDefinition {
 export interface CatalogFetchResult {
   items: CatalogItem[]
   source: 'cinemeta' | 'tvmaze'
+}
+
+export interface SearchResult {
+  item: CatalogItem
+  score: number
+}
+
+export interface RecommendationResult {
+  item: CatalogItem
+  score: number
+  reason: 'sequel' | 'franchise' | 'genre' | 'related'
 }

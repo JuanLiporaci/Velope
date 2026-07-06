@@ -1,11 +1,25 @@
 import { type ReactNode } from 'react'
 import { useViewportScale } from './use-viewport-scale'
+import { SidebarRail } from '../components/sidebar-rail'
+import type { BrowseFocus, BrowseMode } from '../features/catalog/types'
 
 interface AppLayoutProps {
   children: ReactNode
+  focus: BrowseFocus
+  browseMode?: BrowseMode
+  favoritesCount?: number
+  onSelectRail: (index: number) => void
+  isRailInteractive?: boolean
 }
 
-export function AppLayout({ children }: AppLayoutProps) {
+export function AppLayout({
+  children,
+  focus,
+  browseMode = 'catalog',
+  favoritesCount = 0,
+  onSelectRail,
+  isRailInteractive = true,
+}: AppLayoutProps) {
   const viewport = useViewportScale()
 
   return (
@@ -26,14 +40,13 @@ export function AppLayout({ children }: AppLayoutProps) {
           }}
         >
           <div className="flex h-full">
-            <aside className="flex w-[88px] shrink-0 flex-col items-center border-r border-[var(--color-border-subtle)] bg-[var(--color-surface-rail)] py-8">
-              <div
-                className="mb-10 flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--color-accent)]/30 bg-[var(--color-accent-muted)] text-sm font-bold text-[var(--color-accent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]"
-                aria-label="Velope"
-              >
-                V
-              </div>
-            </aside>
+            <SidebarRail
+              focus={focus}
+              browseMode={browseMode}
+              favoritesCount={favoritesCount}
+              onSelectRail={onSelectRail}
+              isInteractive={isRailInteractive}
+            />
 
             <main className="min-w-0 flex-1">{children}</main>
           </div>
