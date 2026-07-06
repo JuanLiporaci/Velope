@@ -13,13 +13,13 @@ export function SearchBar({ focus, query, onQueryChange, onActivate }: SearchBar
 
   return (
     <div
-      className={`search-bar border-b border-[var(--color-border-subtle)] px-12 py-3 backdrop-blur-sm ${
+      className={`search-bar border-b border-[var(--color-border-subtle)] px-12 py-4 backdrop-blur-sm ${
         isFocused ? 'search-bar--focused' : 'search-bar--idle'
       }`}
     >
-      <label className="search-bar__field flex items-center gap-3 rounded-full border px-5 py-3">
+      <label className="search-bar__field flex min-h-[56px] items-center gap-4 rounded-full border px-6 py-3.5">
         <MagnifyingGlass
-          size={18}
+          size={22}
           weight="bold"
           className={isFocused ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]'}
         />
@@ -30,13 +30,13 @@ export function SearchBar({ focus, query, onQueryChange, onActivate }: SearchBar
           onFocus={onActivate}
           placeholder="Buscar en español o inglés: acción, horror, spiderman..."
           aria-label="Buscar títulos"
-          className="min-w-0 flex-1 bg-transparent text-sm text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)]"
+          className="min-w-0 flex-1 bg-transparent text-base text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)]"
         />
         {query ? (
-          <span className="text-xs text-[var(--color-text-muted)]">{query.length} chars</span>
+          <span className="text-sm text-[var(--color-text-muted)]">{query.length} chars</span>
         ) : null}
       </label>
-      <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+      <p className="mt-2.5 text-sm text-[var(--color-text-muted)]">
         {isFocused
           ? 'Escribe para buscar · Enter baja a resultados · ↑↓ para navegar'
           : 'Sube con ↑ desde géneros para buscar'}

@@ -25,9 +25,9 @@ export interface FocusPosition {
 
 export type NavigationDirection = 'up' | 'down' | 'left' | 'right'
 
-export type RailItemId = 'home' | 'favorites'
+export type RailItemId = 'home' | 'favorites' | 'insights'
 
-export type BrowseMode = 'catalog' | 'favorites'
+export type BrowseMode = 'catalog' | 'favorites' | 'insights'
 
 export type FocusZone = 'rail' | 'search' | 'nav' | 'content'
 
@@ -61,6 +61,7 @@ export interface DetailsFocus {
 export const RAIL_ITEMS: Array<{ id: RailItemId; label: string }> = [
   { id: 'home', label: 'Inicio' },
   { id: 'favorites', label: 'Guardados' },
+  { id: 'insights', label: 'Tu año' },
 ]
 
 export const DETAILS_ACTIONS: DetailsActionId[] = ['play', 'favorite', 'recommendations']

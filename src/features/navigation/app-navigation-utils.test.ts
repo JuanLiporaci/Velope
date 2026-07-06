@@ -3,6 +3,7 @@ import type { CatalogRow } from '../catalog/types'
 import {
   getNextBrowseFocus,
   getNextDetailsFocus,
+  getNextRailFocus,
   getBrowseRowsSignature,
   INITIAL_BROWSE_FOCUS,
   realignBrowseFocusForRows,
@@ -162,5 +163,13 @@ describe('app-navigation-utils', () => {
 
     expect(realigned.focus.rowIndex).toBe(0)
     expect(realigned.focus.itemIndex).toBe(0)
+  })
+
+  it('moves only within rail in insights mode helper', () => {
+    const focus = { ...INITIAL_BROWSE_FOCUS, zone: 'rail' as const, railIndex: 2 }
+
+    expect(getNextRailFocus(focus, 'up').railIndex).toBe(1)
+    expect(getNextRailFocus(focus, 'down').railIndex).toBe(0)
+    expect(getNextRailFocus(focus, 'left').railIndex).toBe(2)
   })
 })

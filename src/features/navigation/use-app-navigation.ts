@@ -11,6 +11,7 @@ import { GENRE_NAV_ITEMS } from '../catalog/genres'
 import {
   getNextBrowseFocus,
   getNextDetailsFocus,
+  getNextRailFocus,
   INITIAL_BROWSE_FOCUS,
   realignBrowseFocusForRows,
 } from './app-navigation-utils'
@@ -21,6 +22,7 @@ const FAST_REPEAT_INTERVAL_MS = 55
 interface UseAppNavigationOptions {
   rows: CatalogRow[]
   enabled?: boolean
+  isInsightsMode?: boolean
   onGenreChange?: (genreIndex: number) => void
   onRailSelect?: (railIndex: number) => void
   onOpenDetails?: (focus: BrowseFocus) => void
@@ -70,6 +72,7 @@ function isPrintableKey(key: string): boolean {
 export function useAppNavigation({
   rows,
   enabled = true,
+  isInsightsMode = false,
   onGenreChange,
   onRailSelect,
   onOpenDetails,
@@ -100,6 +103,10 @@ export function useAppNavigation({
     setFocus((current) => getNextBrowseFocus(current, direction, rowsRef.current))
   }, [])
 
+  const moveRail = useCallback((direction: NavigationDirection) => {
+    setFocus((current) => getNextRailFocus({ ...current, zone: 'rail' }, direction))
+  }, [])
+
   const moveDetails = useCallback(
     (direction: NavigationDirection) => {
       setDetailsFocus?.((current) =>
@@ -117,7 +124,7 @@ export function useAppNavigation({
   }, [])
 
   const scheduleRepeat = useCallback(
-    (direction: NavigationDirection, mode: 'browse' | 'details') => {
+    (direction: NavigationDirection, mode: 'browse' | 'details' | 'rail') => {
       clearRepeatTimer()
       activeDirectionRef.current = direction
 
@@ -129,13 +136,15 @@ export function useAppNavigation({
         repeatTimerRef.current = window.setInterval(() => {
           if (mode === 'details') {
             moveDetails(direction)
+          } else if (mode === 'rail') {
+            moveRail(direction)
           } else {
             move(direction)
           }
         }, FAST_REPEAT_INTERVAL_MS)
       }, INITIAL_REPEAT_DELAY_MS)
     },
-    [clearRepeatTimer, move, moveDetails],
+    [clearRepeatTimer, move, moveDetails, moveRail],
   )
 
   useEffect(() => {
@@ -179,6 +188,32 @@ export function useAppNavigation({
 
           const action = DETAILS_ACTIONS[currentDetailsFocus.actionIndex]
           onDetailsAction?.(action)
+        }
+
+        return
+      }
+
+      if (isInsightsMode) {
+        if (isEnterKey(event.key)) {
+          event.preventDefault()
+          onRailSelect?.(focusRef.current.railIndex)
+          return
+        }
+
+        const direction = directionFromKey(event.key)
+        if (!direction) {
+          return
+        }
+
+        event.preventDefault()
+
+        if (event.repeat) {
+          return
+        }
+
+        if (direction === 'up' || direction === 'down') {
+          moveRail(direction)
+          scheduleRepeat(direction, 'rail')
         }
 
         return
@@ -280,8 +315,10 @@ export function useAppNavigation({
     clearRepeatTimer,
     enabled,
     isDetailsOpen,
+    isInsightsMode,
     move,
     moveDetails,
+    moveRail,
     onCloseDetails,
     onDetailsAction,
     onGenreChange,
@@ -294,6 +331,10 @@ export function useAppNavigation({
   ])
 
   useEffect(() => {
+    if (isInsightsMode) {
+      return
+    }
+
     if (rows.length === 0) {
       setFocus((current) => ({
         ...current,
@@ -305,7 +346,7 @@ export function useAppNavigation({
     const realigned = realignBrowseFocusForRows(focusRef.current, rows, rowsSignatureRef.current)
     rowsSignatureRef.current = realigned.signature
     setFocus(realigned.focus)
-  }, [rows])
+  }, [isInsightsMode, rows])
 
   useEffect(() => {
     lastGenreIndexRef.current = focus.genreIndex

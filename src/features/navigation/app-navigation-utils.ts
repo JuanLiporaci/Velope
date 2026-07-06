@@ -17,6 +17,21 @@ export const INITIAL_BROWSE_FOCUS: BrowseFocus = {
   itemIndex: 0,
 }
 
+/** Solo rail lateral (p. ej. pantalla insights sin grid de catálogo). */
+export function getNextRailFocus(
+  current: BrowseFocus,
+  direction: NavigationDirection,
+): BrowseFocus {
+  const railIndex =
+    direction === 'up'
+      ? wrapIndex(current.railIndex - 1, RAIL_ITEMS.length)
+      : direction === 'down'
+        ? wrapIndex(current.railIndex + 1, RAIL_ITEMS.length)
+        : current.railIndex
+
+  return { ...current, zone: 'rail', railIndex }
+}
+
 export function getNextBrowseFocus(
   current: BrowseFocus,
   direction: NavigationDirection,

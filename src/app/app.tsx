@@ -3,6 +3,7 @@ import { AppLayout } from './app-layout'
 import { BrowseScreen } from '../components/browse-screen'
 import { DetailsScreen } from '../components/details-screen'
 import { ErrorState } from '../components/error-state'
+import { HomeInsightsScreen } from '../components/home-insights-screen'
 import { buildBrowseRows } from '../features/catalog/browse-rows'
 import { flattenCatalogRows, mergeCatalogItems } from '../features/catalog/catalog-index'
 import {
@@ -22,6 +23,7 @@ import type {
 } from '../features/catalog/types'
 import { INITIAL_DETAILS_FOCUS } from '../features/catalog/types'
 import { useLocalFavorites } from '../features/favorites/use-local-favorites'
+import { useWatchHistory } from '../features/watch-history/use-watch-history'
 import { getRecommendationItems } from '../features/recommendations/recommendation-utils'
 import { useAppNavigation } from '../features/navigation/use-app-navigation'
 
@@ -37,6 +39,7 @@ export function App() {
   const [error, setError] = useState<string | null>(null)
   const [browseMode, setBrowseMode] = useState<BrowseMode>('catalog')
   const { favorites, toggleFavorite, isFavorite } = useLocalFavorites()
+  const { recordWatch } = useWatchHistory()
   const [activeGenreIndex, setActiveGenreIndex] = useState(0)
   const browseSessionRef = useRef<BrowseSession>({
     genreId: GENRE_NAV_ITEMS[0].id,
@@ -126,6 +129,7 @@ export function App() {
   const { focus, setFocus } = useAppNavigation({
     rows: browseRows,
     enabled: !error,
+    isInsightsMode: screen === 'browse' && browseMode === 'insights',
     isDetailsOpen: screen === 'details',
     detailsFocus,
     setDetailsFocus,
@@ -165,8 +169,8 @@ export function App() {
       setDetailsFocus(INITIAL_DETAILS_FOCUS)
       setPlayFeedback(null)
       setFocus({
-        zone: 'content',
-        railIndex: browseMode === 'favorites' ? 1 : 0,
+        zone: browseMode === 'insights' ? 'rail' : 'content',
+        railIndex: browseMode === 'favorites' ? 1 : browseMode === 'insights' ? 2 : 0,
         genreIndex: session.genreIndex,
         rowIndex: session.rowIndex,
         itemIndex: session.itemIndex,
@@ -178,6 +182,7 @@ export function App() {
       }
 
       if (action === 'play') {
+        recordWatch(detailsItem)
         setPlayFeedback(`Reproduciendo "${detailsItem.title}" · demo UI`)
         return
       }
@@ -227,14 +232,24 @@ export function App() {
         return
       }
 
-      setBrowseMode('favorites')
-      setSearchQuery('')
+      if (railIndex === 1) {
+        setBrowseMode('favorites')
+        setSearchQuery('')
+        setFocusRef.current((current) => ({
+          ...current,
+          zone: 'content',
+          railIndex: 1,
+          rowIndex: 0,
+          itemIndex: 0,
+        }))
+        return
+      }
+
+      setBrowseMode('insights')
       setFocusRef.current((current) => ({
         ...current,
-        zone: 'content',
-        railIndex: 1,
-        rowIndex: 0,
-        itemIndex: 0,
+        zone: 'rail',
+        railIndex: 2,
       }))
     },
   })
@@ -260,14 +275,24 @@ export function App() {
         return
       }
 
-      setBrowseMode('favorites')
-      setSearchQuery('')
+      if (index === 1) {
+        setBrowseMode('favorites')
+        setSearchQuery('')
+        setFocus((current) => ({
+          ...current,
+          zone: 'content',
+          railIndex: 1,
+          rowIndex: 0,
+          itemIndex: 0,
+        }))
+        return
+      }
+
+      setBrowseMode('insights')
       setFocus((current) => ({
         ...current,
-        zone: 'content',
-        railIndex: 1,
-        rowIndex: 0,
-        itemIndex: 0,
+        zone: 'rail',
+        railIndex: 2,
       }))
     },
     [screen, setFocus],
@@ -306,8 +331,8 @@ export function App() {
     setDetailsFocus(INITIAL_DETAILS_FOCUS)
     setPlayFeedback(null)
     setFocus({
-      zone: 'content',
-      railIndex: browseMode === 'favorites' ? 1 : 0,
+      zone: browseMode === 'insights' ? 'rail' : 'content',
+      railIndex: browseMode === 'favorites' ? 1 : browseMode === 'insights' ? 2 : 0,
       genreIndex: session.genreIndex,
       rowIndex: session.rowIndex,
       itemIndex: session.itemIndex,
@@ -316,9 +341,10 @@ export function App() {
 
   const handlePlay = useCallback(() => {
     if (detailsItem) {
+      recordWatch(detailsItem)
       setPlayFeedback(`Reproduciendo "${detailsItem.title}" · demo UI`)
     }
-  }, [detailsItem])
+  }, [detailsItem, recordWatch])
 
   const handleShowRecommendations = useCallback(() => {
     if (recommendations.length > 0) {
@@ -334,13 +360,28 @@ export function App() {
     setFocus((current) => ({ ...current, zone: 'search' }))
   }, [setFocus])
 
+  const handleAssistantQuery = useCallback(
+    (query: string) => {
+      setBrowseMode('catalog')
+      setSearchQuery(query)
+      setFocus({
+        zone: 'search',
+        railIndex: 0,
+        genreIndex: focus.genreIndex,
+        rowIndex: 0,
+        itemIndex: 0,
+      })
+    },
+    [focus.genreIndex, setFocus],
+  )
+
   return (
     <AppLayout
       focus={focus}
       browseMode={browseMode}
       favoritesCount={favorites.length}
       onSelectRail={handleSelectRail}
-      isRailInteractive={screen === 'browse'}
+      isRailInteractive={screen === 'browse' || browseMode === 'insights'}
     >
       {error ? (
         <ErrorState message={error} onRetry={() => void loadGenreCatalog(focus.genreIndex)} />
@@ -357,6 +398,8 @@ export function App() {
           onShowRecommendations={handleShowRecommendations}
           onSelectRecommendation={handleSelectRecommendation}
         />
+      ) : browseMode === 'insights' ? (
+        <HomeInsightsScreen onAssistantQuery={handleAssistantQuery} />
       ) : (
         <BrowseScreen
           rows={browseRows}
