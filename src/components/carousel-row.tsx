@@ -15,6 +15,7 @@ interface CarouselRowProps {
   itemWidth: number
   itemHeight: number
   itemGap: number
+  rowIndex: number
 }
 
 export function CarouselRow({
@@ -25,6 +26,7 @@ export function CarouselRow({
   itemWidth,
   itemHeight,
   itemGap,
+  rowIndex,
 }: CarouselRowProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const [visibleWidth, setVisibleWidth] = useState(0)
@@ -74,7 +76,11 @@ export function CarouselRow({
   }, [isActiveRow, offset])
 
   return (
-    <section className="mb-5" style={{ minHeight: itemHeight + 56 }}>
+    <section
+      className="mb-5"
+      data-row-index={rowIndex}
+      style={{ minHeight: itemHeight + 40 }}
+    >
       <h2
         className={`mb-3 px-12 text-lg font-medium tracking-tight transition-colors duration-150 ${
           isActiveRow ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'

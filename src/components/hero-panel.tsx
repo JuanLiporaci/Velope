@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Star } from '@phosphor-icons/react'
-import { getHeroBackdropImageUrl, getHeroPosterImageUrl } from '../features/catalog/image-url'
+import {
+  getHeroBackdropImageUrl,
+  getHeroPosterImageUrl,
+  getPosterImageUrl,
+} from '../features/catalog/image-url'
 import type { CatalogItem } from '../features/catalog/types'
 
 interface HeroPanelProps {
@@ -10,14 +14,17 @@ interface HeroPanelProps {
 export function HeroPanel({ item }: HeroPanelProps) {
   const [hasBackdropError, setHasBackdropError] = useState(false)
   const [hasPosterError, setHasPosterError] = useState(false)
+  const [isBackdropLoaded, setIsBackdropLoaded] = useState(false)
 
   const backdropUrl = getHeroBackdropImageUrl(item?.backdropUrl) ?? item?.backdropUrl ?? null
   const posterUrl = getHeroPosterImageUrl(item?.posterUrl) ?? item?.posterUrl ?? null
+  const placeholderUrl = getPosterImageUrl(item?.posterUrl) ?? item?.posterUrl ?? null
 
   useEffect(() => {
     setHasBackdropError(false)
     setHasPosterError(false)
-  }, [backdropUrl, posterUrl])
+    setIsBackdropLoaded(false)
+  }, [item?.id, backdropUrl, posterUrl])
 
   if (!item) {
     return (
@@ -29,10 +36,20 @@ export function HeroPanel({ item }: HeroPanelProps) {
   }
 
   const showBackdrop = Boolean(backdropUrl) && !hasBackdropError
+  const showPlaceholder = Boolean(placeholderUrl) && !hasPosterError
 
   return (
     <section className="hero-panel relative h-[300px] overflow-hidden">
       <div className="hero-panel__ambient absolute inset-0" aria-hidden="true" />
+
+      {showPlaceholder ? (
+        <img
+          src={placeholderUrl ?? undefined}
+          alt=""
+          aria-hidden="true"
+          className="hero-panel__placeholder absolute inset-0 h-full w-full scale-110 object-cover object-[68%_center] blur-md"
+        />
+      ) : null}
 
       {showBackdrop ? (
         <img
@@ -40,8 +57,14 @@ export function HeroPanel({ item }: HeroPanelProps) {
           src={backdropUrl ?? undefined}
           alt=""
           aria-hidden="true"
+          decoding="async"
+          fetchPriority="high"
+          loading="eager"
+          onLoad={() => setIsBackdropLoaded(true)}
           onError={() => setHasBackdropError(true)}
-          className="hero-panel__backdrop absolute inset-0 h-full w-full object-cover object-[68%_center]"
+          className={`hero-panel__backdrop absolute inset-0 h-full w-full object-cover object-[68%_center] transition-opacity duration-300 ${
+            isBackdropLoaded ? 'hero-panel__backdrop--visible' : 'opacity-0'
+          }`}
         />
       ) : (
         <div
@@ -96,6 +119,9 @@ export function HeroPanel({ item }: HeroPanelProps) {
               <img
                 src={posterUrl}
                 alt={item.title}
+                decoding="async"
+                fetchPriority="high"
+                loading="eager"
                 onError={() => setHasPosterError(true)}
                 className="h-[236px] w-[160px] object-cover"
               />

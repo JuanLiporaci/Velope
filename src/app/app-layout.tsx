@@ -1,4 +1,3 @@
-import { House } from '@phosphor-icons/react'
 import { type ReactNode } from 'react'
 import { useViewportScale } from './use-viewport-scale'
 
@@ -23,7 +22,7 @@ export function AppLayout({ children }: AppLayoutProps) {
           style={{
             width: viewport.width,
             height: viewport.height,
-            transform: `scale(${viewport.scale})`,
+            transform: `translate(${viewport.offsetX}px, ${viewport.offsetY}px) scale(${viewport.scale})`,
           }}
         >
           <div className="flex h-full">
@@ -34,17 +33,6 @@ export function AppLayout({ children }: AppLayoutProps) {
               >
                 V
               </div>
-
-              <nav aria-label="Navegación principal" className="flex flex-1 flex-col items-center">
-                <button
-                  type="button"
-                  aria-label="Inicio"
-                  aria-current="page"
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--color-accent)] bg-[var(--color-accent-muted)] text-[var(--color-accent)] transition-transform active:scale-[0.98]"
-                >
-                  <House size={22} weight="fill" />
-                </button>
-              </nav>
             </aside>
 
             <main className="min-w-0 flex-1">{children}</main>

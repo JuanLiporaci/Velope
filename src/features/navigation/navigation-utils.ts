@@ -178,28 +178,61 @@ export function getCarouselOffset({
 
 export interface VerticalScrollInput {
   rowIndex: number
-  rowHeight: number
-  rowGap: number
+  rowStride?: number
+  rowVisibleHeight?: number
+  rowTop?: number
+  rowHeight?: number
+  totalContentHeight?: number
   viewportHeight: number
   totalRows: number
-  focusScalePadding?: number
+  edgePadding?: number
+  bottomPadding?: number
 }
 
 export function getVerticalScrollOffset({
   rowIndex,
-  rowHeight,
-  rowGap,
+  rowStride = 0,
+  rowVisibleHeight = 0,
+  rowTop: measuredRowTop,
+  rowHeight: measuredRowHeight,
+  totalContentHeight,
   viewportHeight,
   totalRows,
-  focusScalePadding = 20,
+  edgePadding = 20,
+  bottomPadding = 20,
 }: VerticalScrollInput): number {
   if (totalRows <= 0 || viewportHeight <= 0) {
     return 0
   }
 
-  const rowTop = rowIndex * (rowHeight + rowGap)
-  const rowBottom = rowTop + rowHeight + focusScalePadding
-  const edgePadding = 20
+  const hasMeasuredRow = measuredRowTop !== undefined && measuredRowHeight !== undefined
+  const rowTop = hasMeasuredRow ? measuredRowTop : rowIndex * rowStride
+  const rowHeight = hasMeasuredRow ? measuredRowHeight : rowVisibleHeight
+  const rowBottom = rowTop + rowHeight
+
+  if (rowHeight <= 0) {
+    return 0
+  }
+
+  const totalHeight =
+    totalContentHeight ??
+    (rowStride > 0 && rowVisibleHeight > 0
+      ? (totalRows - 1) * rowStride + rowVisibleHeight + bottomPadding
+      : 0)
+
+  if (totalHeight <= 0) {
+    return 0
+  }
+
+  const maxScroll = Math.max(0, totalHeight - viewportHeight)
+
+  if (totalHeight <= viewportHeight) {
+    return 0
+  }
+
+  if (rowIndex >= totalRows - 1) {
+    return maxScroll
+  }
 
   if (rowTop <= edgePadding) {
     return 0
@@ -207,10 +240,8 @@ export function getVerticalScrollOffset({
 
   if (rowBottom > viewportHeight - edgePadding) {
     const desired = rowBottom - viewportHeight + edgePadding
-    const totalHeight = totalRows * (rowHeight + rowGap) - rowGap + focusScalePadding
-    const maxScroll = Math.max(0, totalHeight - viewportHeight)
-    return Math.min(desired, maxScroll)
+    return Math.min(Math.max(0, desired), maxScroll)
   }
 
-  return Math.max(0, rowTop - edgePadding)
+  return Math.max(0, Math.min(rowTop - edgePadding, maxScroll))
 }

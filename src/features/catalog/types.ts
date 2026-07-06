@@ -25,6 +25,26 @@ export interface FocusPosition {
 
 export type NavigationDirection = 'up' | 'down' | 'left' | 'right'
 
+export type FocusZone = 'nav' | 'content'
+
+export interface BrowseFocus {
+  zone: FocusZone
+  genreIndex: number
+  rowIndex: number
+  itemIndex: number
+}
+
+export interface BrowseSession {
+  genreId: string
+  genreIndex: number
+  rowIndex: number
+  itemIndex: number
+}
+
+export type AppScreen = 'browse' | 'details'
+
+export type DetailsAction = 'play' | 'favorite'
+
 export interface RowDefinition {
   id: string
   title: string

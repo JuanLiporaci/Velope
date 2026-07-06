@@ -178,11 +178,11 @@ describe('navigation-utils', () => {
   it('computes vertical scroll offset for lower rows', () => {
     const offset = getVerticalScrollOffset({
       rowIndex: 5,
-      rowHeight: 320,
-      rowGap: 12,
-      viewportHeight: 736,
+      rowStride: 342,
+      rowVisibleHeight: 322,
+      viewportHeight: 656,
       totalRows: 10,
-      focusScalePadding: 24,
+      bottomPadding: 29,
     })
 
     expect(offset).toBeGreaterThan(0)
@@ -191,14 +191,83 @@ describe('navigation-utils', () => {
   it('scrolls vertically when active row would be clipped at the bottom', () => {
     const offset = getVerticalScrollOffset({
       rowIndex: 2,
-      rowHeight: 320,
-      rowGap: 12,
-      viewportHeight: 736,
+      rowStride: 342,
+      rowVisibleHeight: 322,
+      viewportHeight: 656,
       totalRows: 10,
-      focusScalePadding: 24,
+      bottomPadding: 29,
     })
 
-    const rowBottom = 2 * (320 + 12) + 320 + 24
-    expect(offset).toBeGreaterThanOrEqual(rowBottom - 736)
+    const rowBottom = 2 * 342 + 322
+    expect(offset).toBeGreaterThanOrEqual(rowBottom - 656)
+  })
+
+  it('reveals the final row without clipping when focused on the last item', () => {
+    const viewportHeight = 656
+    const rowStride = 342
+    const rowVisibleHeight = 322
+    const bottomPadding = 29
+    const totalRows = 10
+    const lastRowIndex = 9
+
+    const offset = getVerticalScrollOffset({
+      rowIndex: lastRowIndex,
+      rowStride,
+      rowVisibleHeight,
+      viewportHeight,
+      totalRows,
+      bottomPadding,
+    })
+
+    const totalHeight = (totalRows - 1) * rowStride + rowVisibleHeight + bottomPadding
+    const maxScroll = totalHeight - viewportHeight
+
+    expect(offset).toBe(maxScroll)
+
+    const rowBottomInViewport = lastRowIndex * rowStride - offset + rowVisibleHeight
+    expect(rowBottomInViewport).toBeLessThanOrEqual(viewportHeight)
+  })
+
+  it('pins the last row to the bottom when the carousel is taller than the scroll constant', () => {
+    const viewportHeight = 920
+    const rowStride = 342
+    const rowVisibleHeight = 322
+    const bottomPadding = 29
+    const totalRows = 10
+    const lastRowIndex = 9
+
+    const offset = getVerticalScrollOffset({
+      rowIndex: lastRowIndex,
+      rowStride,
+      rowVisibleHeight,
+      viewportHeight,
+      totalRows,
+      bottomPadding,
+    })
+
+    const totalHeight = (totalRows - 1) * rowStride + rowVisibleHeight + bottomPadding
+    const maxScroll = totalHeight - viewportHeight
+
+    expect(offset).toBe(maxScroll)
+    expect(lastRowIndex * rowStride - offset + rowVisibleHeight).toBeLessThanOrEqual(viewportHeight)
+  })
+
+  it('uses measured row metrics from the DOM when provided', () => {
+    const viewportHeight = 666
+    const totalContentHeight = 3450
+    const rowTop = 3078
+    const rowHeight = 322
+
+    const offset = getVerticalScrollOffset({
+      rowIndex: 9,
+      rowTop,
+      rowHeight,
+      totalContentHeight,
+      viewportHeight,
+      totalRows: 10,
+    })
+
+    expect(offset).toBe(totalContentHeight - viewportHeight)
+    expect(rowTop - offset + rowHeight).toBeLessThanOrEqual(viewportHeight)
   })
 })

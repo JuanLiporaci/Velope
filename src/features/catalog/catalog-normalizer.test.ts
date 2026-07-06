@@ -16,7 +16,7 @@ describe('catalog-normalizer', () => {
     const backdrop = getHeroBackdropImageUrl('https://images.metahub.space/background/medium/tt32565993/img')
 
     expect(poster).toContain('w=360')
-    expect(backdrop).toContain('w=1920')
+    expect(backdrop).toContain('w=1280')
   })
 
   it('normalizes cinemeta movie metadata', () => {

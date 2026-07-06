@@ -43,6 +43,7 @@ describe('CarouselRow', () => {
         items={items}
         focusedIndex={24}
         isActiveRow
+        rowIndex={0}
         itemWidth={160}
         itemHeight={240}
         itemGap={20}
@@ -89,6 +90,7 @@ describe('CarouselRow', () => {
         items={items}
         focusedIndex={29}
         isActiveRow
+        rowIndex={0}
         itemWidth={160}
         itemHeight={240}
         itemGap={20}

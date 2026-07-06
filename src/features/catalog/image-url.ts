@@ -43,7 +43,7 @@ export function getHeroPosterImageUrl(url: string | null | undefined): string | 
 }
 
 export function getHeroBackdropImageUrl(url: string | null | undefined): string | null {
-  return normalizeImageUrl(url, { width: 1920, height: 1080, fit: 'cover' })
+  return normalizeImageUrl(url, { width: 1280, height: 720, fit: 'cover' })
 }
 
 export function getImageFallbackLabel(title: string): string {
