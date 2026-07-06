@@ -19,8 +19,9 @@ export function computeViewportScale(
 ): ViewportScale {
   const scaleByWidth = viewportWidth / BASE_WIDTH
   const scaleByHeight = viewportHeight / BASE_HEIGHT
-  const scale = Math.max(scaleByWidth, scaleByHeight)
+  const scale = Math.min(scaleByWidth, scaleByHeight)
   const renderedWidth = BASE_WIDTH * scale
+  const renderedHeight = BASE_HEIGHT * scale
 
   return {
     width: BASE_WIDTH,
@@ -29,7 +30,7 @@ export function computeViewportScale(
     hostWidth: viewportWidth,
     hostHeight: viewportHeight,
     offsetX: (viewportWidth - renderedWidth) / 2,
-    offsetY: 0,
+    offsetY: (viewportHeight - renderedHeight) / 2,
   }
 }
 

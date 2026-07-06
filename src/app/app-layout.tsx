@@ -24,13 +24,7 @@ export function AppLayout({
 
   return (
     <div className="tv-shell">
-      <div
-        className="tv-viewport-host"
-        style={{
-          width: viewport.hostWidth,
-          height: viewport.hostHeight,
-        }}
-      >
+      <div className="tv-viewport-host">
         <div
           className="tv-viewport"
           style={{
