@@ -1,4 +1,5 @@
 import type { CatalogItem, MediaType, RowDefinition } from '../types'
+import { getCinemetaPosterUrl } from '../catalog-normalizer'
 
 const CINEMETA_BASE = 'https://v3-cinemeta.strem.io'
 
@@ -67,7 +68,7 @@ function normalizeCinemetaMeta(meta: CinemetaMeta, fallbackType: MediaType): Cat
     type,
     title: meta.name ?? 'Untitled',
     year: meta.year ?? meta.releaseInfo ?? '',
-    posterUrl: meta.poster ?? null,
+    posterUrl: getCinemetaPosterUrl(meta),
     backdropUrl: meta.background ?? null,
     description: meta.description ?? '',
     rating: meta.imdbRating ?? null,

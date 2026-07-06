@@ -1,5 +1,5 @@
 const IMAGE_PROXY_BASE = 'https://wsrv.nl'
-const METAHUB_HOST = 'images.metahub.space'
+const METAHUB_HOSTS = new Set(['images.metahub.space', 'live.metahub.space'])
 
 interface ProxyImageOptions {
   width: number
@@ -23,8 +23,8 @@ export function normalizeImageUrl(
   try {
     const parsedUrl = new URL(url)
 
-    if (parsedUrl.hostname === METAHUB_HOST) {
-      const source = `${parsedUrl.hostname}${parsedUrl.pathname}${parsedUrl.search}`
+    if (METAHUB_HOSTS.has(parsedUrl.hostname)) {
+      const source = `${parsedUrl.protocol}//${parsedUrl.hostname}${parsedUrl.pathname}${parsedUrl.search}`
       return buildProxyUrl(source, options)
     }
 

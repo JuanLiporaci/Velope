@@ -26,6 +26,20 @@ interface TvMazeLikeShow {
   externals?: { imdb?: string | null }
 }
 
+const POSTER_OVERRIDES_BY_ID: Record<string, string> = {
+  tt10045426:
+    'https://m.media-amazon.com/images/M/MV5BNTE5NTEyNDktYzk5NC00MDk3LWEwODgtZTY4N2QwN2VhYjg5XkEyXkFqcGc@._V1_SX250.jpg',
+}
+
+export function getCinemetaPosterUrl(meta: CinemetaLikeMeta): string | null {
+  const id = meta.id ?? meta.imdb_id
+  if (id && POSTER_OVERRIDES_BY_ID[id]) {
+    return POSTER_OVERRIDES_BY_ID[id]
+  }
+
+  return meta.poster ?? meta.background ?? null
+}
+
 export function normalizeFromCinemeta(meta: CinemetaLikeMeta, fallbackType: 'movie' | 'series'): CatalogItem {
   const type = meta.type === 'series' ? 'series' : fallbackType
   const id = meta.id ?? meta.imdb_id ?? meta.name ?? 'unknown'
@@ -35,7 +49,7 @@ export function normalizeFromCinemeta(meta: CinemetaLikeMeta, fallbackType: 'mov
     type,
     title: meta.name ?? 'Untitled',
     year: meta.year ?? meta.releaseInfo ?? '',
-    posterUrl: meta.poster ?? null,
+    posterUrl: getCinemetaPosterUrl(meta),
     backdropUrl: meta.background ?? null,
     description: meta.description ?? '',
     rating: meta.imdbRating ?? null,

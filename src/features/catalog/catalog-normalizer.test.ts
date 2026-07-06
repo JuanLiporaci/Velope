@@ -7,7 +7,15 @@ describe('catalog-normalizer', () => {
     const imageUrl = normalizeImageUrl('https://images.metahub.space/poster/small/tt32565993/img')
 
     expect(imageUrl).toBe(
-      'https://wsrv.nl/?url=images.metahub.space%2Fposter%2Fsmall%2Ftt32565993%2Fimg&w=360&h=540&fit=cover&output=webp',
+      'https://wsrv.nl/?url=https%3A%2F%2Fimages.metahub.space%2Fposter%2Fsmall%2Ftt32565993%2Fimg&w=360&h=540&fit=cover&output=webp',
+    )
+  })
+
+  it('proxies live Metahub images used by some newer movies', () => {
+    const imageUrl = getPosterImageUrl('https://live.metahub.space/poster/small/tt14828040/img')
+
+    expect(imageUrl).toBe(
+      'https://wsrv.nl/?url=https%3A%2F%2Flive.metahub.space%2Fposter%2Fsmall%2Ftt14828040%2Fimg&w=360&h=540&fit=cover&output=webp',
     )
   })
 
@@ -46,6 +54,34 @@ describe('catalog-normalizer', () => {
       rating: '9.3',
       genres: ['Drama'],
     })
+  })
+
+  it('uses a known poster override for broken Gary metadata', () => {
+    const item = normalizeFromCinemeta(
+      {
+        id: 'tt10045426',
+        name: 'Gary',
+        type: 'movie',
+        poster: 'https://images.metahub.space/poster/small/tt10045426/img',
+      },
+      'movie',
+    )
+
+    expect(item.posterUrl).toContain('m.media-amazon.com')
+  })
+
+  it('uses background art as a poster fallback when Cinemeta omits the poster', () => {
+    const item = normalizeFromCinemeta(
+      {
+        id: 'tt42058987',
+        name: 'Gary the Goblin',
+        type: 'movie',
+        background: 'https://m.media-amazon.com/images/M/example.jpg',
+      },
+      'movie',
+    )
+
+    expect(item.posterUrl).toBe('https://m.media-amazon.com/images/M/example.jpg')
   })
 
   it('normalizes tvmaze show metadata', () => {

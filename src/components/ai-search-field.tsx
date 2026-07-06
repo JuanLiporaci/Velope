@@ -30,11 +30,15 @@ export function AiSearchField({
     <div className="min-w-0">
       <form
         onSubmit={handleSubmit}
-        className={`ai-bar__assistant flex items-center gap-3 rounded-full border px-4 transition-colors duration-150 ${
+        className={`ai-bar__assistant flex items-center gap-4 rounded-full border transition-colors duration-150 ${
           isFocused ? 'ai-bar__assistant--focused' : ''
-        } ${compact ? 'min-h-[40px] py-2' : 'min-h-[48px] px-5 py-2.5'}`}
+        } ${compact ? 'min-h-[44px] px-4 py-2' : 'min-h-[72px] px-7 py-3.5'}`}
       >
-        <Sparkle size={20} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+        <Sparkle
+          size={compact ? 20 : 26}
+          weight="fill"
+          className="shrink-0 text-[var(--color-accent)]"
+        />
         <input
           type="text"
           value={value}
@@ -43,22 +47,26 @@ export function AiSearchField({
           placeholder={placeholder}
           aria-label="Asistente de búsqueda"
           className={`min-w-0 flex-1 bg-transparent text-[var(--color-text-primary)] outline-none placeholder:text-[var(--color-text-muted)] ${
-            compact ? 'text-sm' : 'text-base'
+            compact ? 'text-sm' : 'text-xl'
           }`}
         />
         <button
           type="button"
           aria-label="Búsqueda por voz"
-          className="ai-bar__action flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--color-border-subtle)] bg-[rgba(255,255,255,0.04)] text-[var(--color-text-secondary)] transition-transform duration-150 active:scale-[0.98]"
+          className={`ai-bar__action flex shrink-0 items-center justify-center rounded-full border border-[var(--color-border-subtle)] bg-[rgba(255,255,255,0.04)] text-[var(--color-text-secondary)] transition-transform duration-150 active:scale-[0.98] ${
+            compact ? 'h-9 w-9' : 'h-12 w-12'
+          }`}
         >
-          <Microphone size={18} weight="bold" />
+          <Microphone size={compact ? 18 : 22} weight="bold" />
         </button>
         <button
           type="submit"
           aria-label="Buscar con asistente"
-          className="ai-bar__action ai-bar__action--primary flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[rgba(45,212,168,0.35)] bg-[rgba(45,212,168,0.14)] text-[var(--color-accent)] transition-transform duration-150 active:scale-[0.98]"
+          className={`ai-bar__action ai-bar__action--primary flex shrink-0 items-center justify-center rounded-full border border-[rgba(45,212,168,0.35)] bg-[rgba(45,212,168,0.14)] text-[var(--color-accent)] transition-transform duration-150 active:scale-[0.98] ${
+            compact ? 'h-9 w-9' : 'h-12 w-12'
+          }`}
         >
-          <Sparkle size={18} weight="fill" />
+          <Sparkle size={compact ? 18 : 22} weight="fill" />
         </button>
       </form>
       {hint ? <p className="mt-2 text-sm text-[var(--color-text-muted)]">{hint}</p> : null}

@@ -12,25 +12,34 @@ export interface ViewportScale {
 
 const BASE_WIDTH = 1920
 const BASE_HEIGHT = 1080
+const BASE_ASPECT_RATIO = BASE_WIDTH / BASE_HEIGHT
 
 export function computeViewportScale(
   viewportWidth = window.innerWidth,
   viewportHeight = window.innerHeight,
 ): ViewportScale {
-  const scaleByWidth = viewportWidth / BASE_WIDTH
-  const scaleByHeight = viewportHeight / BASE_HEIGHT
-  const scale = Math.min(scaleByWidth, scaleByHeight)
-  const renderedWidth = BASE_WIDTH * scale
-  const renderedHeight = BASE_HEIGHT * scale
+  const viewportAspectRatio = viewportWidth / viewportHeight
+  const scale =
+    viewportAspectRatio >= BASE_ASPECT_RATIO
+      ? viewportHeight / BASE_HEIGHT
+      : viewportWidth / BASE_WIDTH
+  const width =
+    viewportAspectRatio >= BASE_ASPECT_RATIO
+      ? viewportWidth / scale
+      : BASE_WIDTH
+  const height =
+    viewportAspectRatio >= BASE_ASPECT_RATIO
+      ? BASE_HEIGHT
+      : viewportHeight / scale
 
   return {
-    width: BASE_WIDTH,
-    height: BASE_HEIGHT,
+    width,
+    height,
     scale,
     hostWidth: viewportWidth,
     hostHeight: viewportHeight,
-    offsetX: (viewportWidth - renderedWidth) / 2,
-    offsetY: (viewportHeight - renderedHeight) / 2,
+    offsetX: 0,
+    offsetY: 0,
   }
 }
 

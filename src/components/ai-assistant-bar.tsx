@@ -99,7 +99,7 @@ export function AiAssistantBar({
   return (
     <header
       className={`ai-bar shrink-0 border-b border-[var(--color-border-subtle)] backdrop-blur-md ${
-        compact ? 'px-8 py-2' : 'sticky top-0 z-20 px-10 py-3'
+        compact ? 'px-8 py-2' : 'sticky top-0 z-20 px-12 py-4'
       }`}
     >
       <div className={`grid items-center gap-4 ${showMeta ? 'grid-cols-[minmax(0,1fr)_auto]' : 'grid-cols-1'}`}>
